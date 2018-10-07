@@ -2,14 +2,17 @@
 name = "openweather"
 version = "0.0.1"
 authors = ["Broderick Carlin <broderick.carlin@gmail.com>"]
+description = "A rust crate wrapping openweather's API into a simple easy to use interface"
+repository = "https://github.com/BroderickCarlin/openweather"
+readme = "README.md"
+keywords = ["openweather", "openweathermaps", "weather", "api"]
+categories = ["api-bindings", "science"]
+license = "MIT"
+license-file = "LICENSE-MIT"
 
 [lib]
 name = "openweather"
 path = "src/lib.rs"
-
-[[bin]]
-name = "openweather"
-path = "src/bin.rs"
 
 [dependencies]
 reqwest = "0.8.6"
