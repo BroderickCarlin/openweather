@@ -1,0 +1,20 @@
+[package]
+name = "openweather"
+version = "0.0.1"
+authors = ["Broderick Carlin <broderick.carlin@gmail.com>"]
+
+[lib]
+name = "openweather"
+path = "src/lib.rs"
+
+[[bin]]
+name = "openweather"
+path = "src/bin.rs"
+
+[dependencies]
+reqwest = "0.8.6"
+serde_json = "1.0"
+serde = "1.0.70"
+serde_derive = "1.0.70"
+time = "0.1.40"
+url = "1.5.1"
