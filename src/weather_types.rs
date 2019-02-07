@@ -34,6 +34,7 @@ pub struct Main {
     pub sea_level: Option<f32>,
     pub grnd_level: Option<f32>,
     pub humidity: f32,
+    #[serde(default)]
     pub temp_kf: Option<f32>
 }
 
