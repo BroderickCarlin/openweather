@@ -8,7 +8,7 @@ extern crate url;
 
 mod weather_types;
 
-use weather_types::*;
+pub use weather_types::*;
 use url::Url;
 
 static API_BASE: &str = "https://api.openweathermap.org/data/2.5/";
