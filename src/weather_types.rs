@@ -31,7 +31,9 @@ pub struct Main {
     pub temp_min: f32,
     pub temp_max: f32,
     pub pressure: f32,
+    #[serde(default)]
     pub sea_level: Option<f32>,
+    #[serde(default)]
     pub grnd_level: Option<f32>,
     pub humidity: f32,
     #[serde(default)]
