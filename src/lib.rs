@@ -74,8 +74,8 @@ fn get<T>(url: &str) -> Result<T, ErrorReport> where T: serde::de::DeserializeOw
         Err(_) => {
             let err_report: ErrorReport = match serde_json::from_str(res.as_str()) {
                 Ok(report) => {report},
-                Err(_) => {
-                    return Err(ErrorReport{cod: 0, message: format!("Got unexpected response: {:?}", res)});
+                Err(serde_error) => {
+                    return Err(ErrorReport{cod: 0, message: format!("Parsing error {}\n\nResponse: {}", serde_error, res)});
                 }
             };
             return Err(err_report);
