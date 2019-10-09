@@ -26,6 +26,27 @@ pub enum LocationSpecifier<'a>{
     CityIds(Vec<&'a str>),
 }
 
+#[derive(Debug)]
+pub enum Unit {
+    // Celcius, default
+    Metric,
+    // Kelvin
+    Standard,
+    // Fahrenheit
+    Imperial,
+}
+
+impl Unit {
+    pub fn format(&self) -> Option<(String, String)> {
+        match self {
+            Unit::Metric => Some(("units".to_string(), "metric".to_string())),
+            Unit::Standard => None,
+            Unit::Imperial => Some(("units".to_string(), "imperial".to_string())),
+        }
+    }
+}
+
+
 impl<'a> LocationSpecifier<'a> {
     pub fn format(&'a self) -> Vec<(String, String)> {
         match &self {
@@ -90,6 +111,8 @@ pub fn get_current_weather(location: LocationSpecifier, key: &str) -> Result<Wea
 
 	base.push_str("weather");
 	params.push(("APPID".to_string(), key.to_string()));
+    params.push(("units".to_string(), "metric".to_string()));
+    params.push(("lang".to_string(), "de".to_string()));
 
 	let url = Url::parse_with_params(&base, params).unwrap();
     get(&url.as_str())
