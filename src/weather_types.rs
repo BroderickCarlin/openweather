@@ -20,7 +20,7 @@ pub struct CityLong {
     pub lon: u32,
     pub country: String,
     pub iso2: String,
-#[serde(rename="type")]
+    #[serde(rename = "type")]
     pub city_type: String,
     pub population: u32,
 }
@@ -37,7 +37,7 @@ pub struct Main {
     pub grnd_level: Option<f32>,
     pub humidity: f32,
     #[serde(default)]
-    pub temp_kf: Option<f32>
+    pub temp_kf: Option<f32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -62,13 +62,13 @@ pub struct Wind {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Rain {
-#[serde(rename="3h")]
+    #[serde(rename = "3h")]
     pub three_h: Option<f32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct System {
-    pub pod: String
+    pub pod: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -90,7 +90,7 @@ pub struct TimeSliceHourly {
     pub wind: Wind,
     pub rain: Rain,
     pub sys: System,
-    pub dt_txt: String
+    pub dt_txt: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -107,19 +107,19 @@ pub struct TimeSliceDaily {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ErrorReport {
-    pub cod: u32, 
+    pub cod: u32,
     pub message: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Sys {
-#[serde(rename="type")]
+    #[serde(rename = "type")]
     pub message_type: u32,
     pub id: u32,
     pub message: f32,
     pub country: String,
     pub sunrise: u64,
-    pub sunset: u64, 
+    pub sunset: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
