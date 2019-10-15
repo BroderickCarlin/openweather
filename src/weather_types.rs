@@ -6,6 +6,7 @@ pub struct Coordinates {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct CityShort {
+    #[serde(default)]
     pub id: u32,
     pub name: String,
     pub coord: Coordinates,
@@ -57,7 +58,7 @@ pub struct Wind {
     pub gust: Option<f32>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Default,Serialize, Deserialize, Debug)]
 pub struct Rain {
 #[serde(rename="3h")]
     pub three_h: Option<f32>,
@@ -85,6 +86,7 @@ pub struct TimeSliceHourly {
     pub weather: Vec<Weather>,
     pub clouds: Clouds,
     pub wind: Wind,
+    #[serde(default)]
     pub rain: Rain,
     pub sys: System,
     pub dt_txt: String
