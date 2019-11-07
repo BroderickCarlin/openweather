@@ -1,144 +1,48 @@
-extern crate serde;
-extern crate serde_json;
-#[macro_use]
-extern crate serde_derive;
-extern crate reqwest;
-extern crate time;
-extern crate url;
+use serde;
+use serde_json;
+
+use time;
+use url;
 
 mod weather_types;
+mod location;
+mod parameters;
 
+pub use location::LocationSpecifier;
+pub use parameters::Settings;
+
+use log::debug;
 use url::Url;
 pub use weather_types::*;
 
 static API_BASE: &str = "https://api.openweathermap.org/data/2.5/";
 
-#[derive(Debug)]
-pub enum LocationSpecifier<'a> {
-    CityAndCountryName {
-        city: &'a str,
-        country: &'a str,
-    },
-    CityId(&'a str),
-    Coordinates {
-        lat: f32,
-        lon: f32,
-    },
-    ZipCode {
-        zip: &'a str,
-        country: &'a str,
-    },
-
-    // The following location specifiers are used to specify multiple cities or a region
-    BoundingBox {
-        lon_left: f32,
-        lat_bottom: f32,
-        lon_right: f32,
-        lat_top: f32,
-        zoom: f32,
-    },
-    Circle {
-        lat: f32,
-        lon: f32,
-        count: u16,
-    },
-    CityIds(Vec<&'a str>),
-}
-
-#[derive(Debug)]
-pub enum Unit {
-    // Celcius, default
-    Metric,
-    // Kelvin
-    Standard,
-    // Fahrenheit
-    Imperial,
-}
-
-impl Unit {
-    pub fn format(&self) -> Option<(String, String)> {
-        match self {
-            Unit::Metric => Some(("units".to_string(), "metric".to_string())),
-            Unit::Standard => None,
-            Unit::Imperial => Some(("units".to_string(), "imperial".to_string())),
-        }
-    }
-}
 
 
-impl<'a> LocationSpecifier<'a> {
-    pub fn format(&'a self) -> Vec<(String, String)> {
-        match &self {
-            LocationSpecifier::CityAndCountryName { city, country } => {
-                if *country == "" {
-                    return vec![("q".to_string(), city.to_string())];
-                } else {
-                    return vec![("q".to_string(), format!("{},{}", city, country))];
-                }
-            }
-            LocationSpecifier::CityId(id) => {
-                return vec![("id".to_string(), id.to_string())];
-            }
-            LocationSpecifier::Coordinates { lat, lon } => {
-                return vec![
-                    ("lat".to_string(), format!("{}", lat)),
-                    ("lon".to_string(), format!("{}", lon)),
-                ];
-            }
-            LocationSpecifier::ZipCode { zip, country } => {
-                if *country == "" {
-                    return vec![("zip".to_string(), zip.to_string())];
-                } else {
-                    return vec![("zip".to_string(), format!("{},{}", zip, country))];
-                }
-            }
-            LocationSpecifier::BoundingBox {
-                lon_left,
-                lat_bottom,
-                lon_right,
-                lat_top,
-                zoom,
-            } => {
-                return vec![(
-                    "bbox".to_string(),
-                    format!(
-                        "{},{},{},{},{}",
-                        lon_left, lat_bottom, lon_right, lat_top, zoom
-                    ),
-                )];
-            }
-            LocationSpecifier::Circle { lat, lon, count } => {
-                return vec![
-                    ("lat".to_string(), format!("{}", lat)),
-                    ("lon".to_string(), format!("{}", lon)),
-                    ("cnt".to_string(), format!("{}", count)),
-                ];
-            }
-            LocationSpecifier::CityIds(ids) => {
-                let mut locations: String = "".to_string();
-                for loc in ids {
-                    locations += loc;
-                }
-                return vec![("id".to_string(), locations.to_string())];
-            }
-        }
-    }
-}
+
 
 fn get<T>(url: &str) -> Result<T, ErrorReport>
 where
     T: serde::de::DeserializeOwned,
 {
-    let res = reqwest::get(url).unwrap().text().unwrap();
+    let mut res = Vec::new();
+
+    let status = http_req::request::get(url, &mut res).unwrap();
+    log::debug!("Url: {:?}", url);
+    debug!("Status: {:?}", status);
+    debug!("Body_utf8: {:?}", res);
+    //let res = reqwest::get(url).unwrap().text().unwrap();
+    let res = String::from_utf8_lossy(&res); //.to_string();//TODO: fix uneccesary
+    debug!("Body_String: {:?}", res);
     let data: T = match serde_json::from_str(&res) {
         Ok(val) => val,
         Err(_) => {
-            let err_report: ErrorReport = match serde_json::from_str(res.as_str()) {
+            let err_report: ErrorReport = match serde_json::from_str(&res) {
                 Ok(report) => report,
-                Err(_) => {
+                Err(e) => {
                     return Err(ErrorReport {
                         cod: 0,
-                        message: format!("Got unexpected response: {:?}", res),
+                        message: format!("Got unexpected response: {:?} from error: {:?}", res, e),
                     });
                 }
             };
@@ -151,12 +55,15 @@ where
 pub fn get_current_weather(
     location: LocationSpecifier,
     key: &str,
+    settings: Settings,
 ) -> Result<WeatherReportCurrent, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
 
     base.push_str("weather");
     params.push(("APPID".to_string(), key.to_string()));
+
+    
     params.push(("units".to_string(), "metric".to_string()));
     params.push(("lang".to_string(), "de".to_string()));
 
@@ -167,6 +74,7 @@ pub fn get_current_weather(
 pub fn get_5_day_forecast(
     location: LocationSpecifier,
     key: &str,
+    settings: Settings,
 ) -> Result<WeatherReport5Day, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
@@ -182,6 +90,7 @@ pub fn get_16_day_forecast(
     location: LocationSpecifier,
     key: &str,
     len: u8,
+    settings: Settings,
 ) -> Result<WeatherReport16Day, ErrorReport> {
     if len > 16 || len == 0 {
         return Err(ErrorReport {
@@ -205,6 +114,7 @@ pub fn get_historical_data(
     key: &str,
     start: time::Timespec,
     end: time::Timespec,
+    settings: Settings,
 ) -> Result<WeatherReportHistorical, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
@@ -225,6 +135,7 @@ pub fn get_accumulated_temperature_data(
     start: time::Timespec,
     end: time::Timespec,
     threshold: u32,
+    settings: Settings,
 ) -> Result<WeatherAccumulatedTemperature, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
@@ -246,6 +157,7 @@ pub fn get_accumulated_precipitation_data(
     start: time::Timespec,
     end: time::Timespec,
     threshold: u32,
+    settings: Settings,
 ) -> Result<WeatherAccumulatedPrecipitation, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
@@ -264,6 +176,7 @@ pub fn get_accumulated_precipitation_data(
 pub fn get_current_uv_index(
     location: LocationSpecifier,
     key: &str,
+    settings: Settings,
 ) -> Result<UvIndex, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
@@ -279,6 +192,7 @@ pub fn get_forecast_uv_index(
     location: LocationSpecifier,
     key: &str,
     len: u8,
+    settings: Settings,
 ) -> Result<ForecastUvIndex, ErrorReport> {
     if len > 8 || len == 0 {
         return Err(ErrorReport {
@@ -302,6 +216,7 @@ pub fn get_historical_uv_index(
     key: &str,
     start: time::Timespec,
     end: time::Timespec,
+    settings: Settings,
 ) -> Result<HistoricalUvIndex, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
@@ -313,4 +228,30 @@ pub fn get_historical_uv_index(
 
     let url = Url::parse_with_params(&base, params).unwrap();
     get(&url.as_str())
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::LocationSpecifier;
+    static API_KEY: &str = "5d4236f3e43127bdeb1fa96592ad1d93"; //"YOUR_TEST_API_KEY_HERE";
+
+    #[test]
+    fn get_current_weather() {
+        let loc = LocationSpecifier::CityAndCountryName {
+            city: "Minneapolis",
+            country: "USA",
+        };
+        let weather = crate::get_current_weather(loc, API_KEY).unwrap();
+        println!("Right now in Minneapolis, MN it is {}C", weather.main.temp);
+    }
+
+    #[test]
+    fn get_5_day_forecast() {
+        let loc = LocationSpecifier::CityAndCountryName {
+            city: "Minneapolis",
+            country: "USA",
+        };
+        let weather = crate::get_5_day_forecast(loc, API_KEY).unwrap();
+        println!("Right now in Minneapolis, MN it is {}C", weather.main.temp);
+    }
 }

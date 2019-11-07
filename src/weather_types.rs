@@ -1,3 +1,5 @@
+use serde_derive::{Deserialize, Serialize};
+
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Coordinates {
     pub lat: f32,
@@ -116,7 +118,7 @@ pub struct Sys {
     #[serde(rename = "type")]
     pub message_type: u32,
     pub id: u32,
-    pub message: f32,
+    pub message: Option<f32>,
     pub country: String,
     pub sunrise: u64,
     pub sunset: u64,
