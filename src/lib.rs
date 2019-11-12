@@ -232,8 +232,17 @@ pub fn get_historical_uv_index(
 
 #[cfg(test)]
 mod tests {
-    use crate::LocationSpecifier;
-    static API_KEY: &str = "5d4236f3e43127bdeb1fa96592ad1d93"; //"YOUR_TEST_API_KEY_HERE";
+    use crate::{LocationSpecifier, Settings};
+    static SETTINGS: &Settings = &Settings {
+        unit: None,
+        lang: None,
+    };
+
+    use dotenv;
+    fn api_key() -> String {
+        let key = "API_KEY";
+        dotenv::var(key).expect("get api key for testing from .env file")
+    }
 
     #[test]
     fn get_current_weather() {
@@ -241,7 +250,7 @@ mod tests {
             city: "Minneapolis",
             country: "USA",
         };
-        let weather = crate::get_current_weather(loc, API_KEY).unwrap();
+        let weather = crate::get_current_weather(loc, &api_key(), SETTINGS).unwrap();
         println!("Right now in Minneapolis, MN it is {}C", weather.main.temp);
     }
 
@@ -251,7 +260,7 @@ mod tests {
             city: "Minneapolis",
             country: "USA",
         };
-        let weather = crate::get_5_day_forecast(loc, API_KEY).unwrap();
-        println!("Right now in Minneapolis, MN it is {}C", weather.main.temp);
+        let weather = crate::get_5_day_forecast(loc, &api_key(), SETTINGS).unwrap();
+        println!("5 Day Report in Minneapolis, MN it is {:?}", weather.list);
     }
 }
