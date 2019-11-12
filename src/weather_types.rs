@@ -12,6 +12,10 @@ pub struct CityShort {
     pub name: String,
     pub coord: Coordinates,
     pub country: String,
+    pub population: u32,
+    pub timezone: i32,
+    pub sunrise: u64,
+    pub sunset: u64
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -64,6 +68,14 @@ pub struct Wind {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Rain {
+    /// Rain volume in mm
+    #[serde(rename = "3h")]
+    pub three_h: Option<f32>
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Snow {
+    /// Snow volume
     #[serde(rename = "3h")]
     pub three_h: Option<f32>,
 }
@@ -90,7 +102,8 @@ pub struct TimeSliceHourly {
     pub weather: Vec<Weather>,
     pub clouds: Clouds,
     pub wind: Wind,
-    pub rain: Rain,
+    pub rain: Option<Rain>,
+    pub snow: Option<Snow>,
     pub sys: System,
     pub dt_txt: String,
 }
@@ -144,6 +157,7 @@ pub struct WeatherReportCurrent {
 pub struct WeatherReport5Day {
     pub cod: String,
     pub message: f32,
+    pub cnt: u8,
     pub list: Vec<TimeSliceHourly>,
     pub city: CityShort,
 }
