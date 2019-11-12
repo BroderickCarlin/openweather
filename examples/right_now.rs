@@ -1,6 +1,4 @@
-extern crate openweather;
-
-use openweather::LocationSpecifier;
+use openweather::{LocationSpecifier, Settings};
 static API_KEY: &str = "YOUR_API_KEY_HERE";
 
 fn main() {
@@ -8,6 +6,6 @@ fn main() {
         city: "Minneapolis",
         country: "USA",
     };
-    let weather = openweather::get_current_weather(loc, API_KEY).unwrap();
+    let weather = openweather::get_current_weather(loc, API_KEY, &Settings::default()).unwrap();
     println!("Right now in Minneapolis, MN it is {}K", weather.main.temp);
 }
