@@ -1,6 +1,6 @@
 [package]
 name = "openweather"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Broderick Carlin <broderick.carlin@gmail.com>"]
 description = "A rust crate wrapping openweather's API into a simple easy to use interface"
 repository = "https://github.com/BroderickCarlin/openweather"

@@ -15,7 +15,7 @@ pub struct CityShort {
     pub population: u32,
     pub timezone: i32,
     pub sunrise: u64,
-    pub sunset: u64
+    pub sunset: u64,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -70,7 +70,7 @@ pub struct Wind {
 pub struct Rain {
     /// Rain volume in mm
     #[serde(rename = "3h")]
-    pub three_h: Option<f32>
+    pub three_h: Option<f32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

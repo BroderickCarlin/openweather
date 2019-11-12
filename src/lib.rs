@@ -38,7 +38,10 @@ where
                 Err(e) => {
                     return Err(ErrorReport {
                         cod: 0,
-                        message: format!("Got unexpected response: {:?} from error: {:?}", res, e),
+                        message: format!(
+                            "Got unexpected response: {:?} from (parsing) error: {:?}",
+                            res, e
+                        ),
                     });
                 }
             };

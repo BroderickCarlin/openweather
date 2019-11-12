@@ -30,8 +30,6 @@ pub enum LocationSpecifier<'a> {
     CityIds(Vec<&'a str>),
 }
 
-
-
 impl<'a> LocationSpecifier<'a> {
     pub fn format(&'a self) -> Vec<(String, String)> {
         match &self {
