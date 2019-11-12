@@ -4,9 +4,9 @@ use serde_json;
 use time;
 use url;
 
-mod weather_types;
 mod location;
 mod parameters;
+mod weather_types;
 
 pub use location::LocationSpecifier;
 pub use parameters::Settings;
@@ -17,10 +17,6 @@ pub use weather_types::*;
 
 static API_BASE: &str = "https://api.openweathermap.org/data/2.5/";
 
-
-
-
-
 fn get<T>(url: &str) -> Result<T, ErrorReport>
 where
     T: serde::de::DeserializeOwned,
@@ -28,7 +24,7 @@ where
     let mut res = Vec::new();
 
     let status = http_req::request::get(url, &mut res).unwrap();
-    log::debug!("Url: {:?}", url);
+    debug!("Url: {:?}", url);
     debug!("Status: {:?}", status);
     debug!("Body_utf8: {:?}", res);
     //let res = reqwest::get(url).unwrap().text().unwrap();
@@ -55,17 +51,14 @@ where
 pub fn get_current_weather(
     location: LocationSpecifier,
     key: &str,
-    settings: Settings,
+    settings: &Settings,
 ) -> Result<WeatherReportCurrent, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
 
     base.push_str("weather");
     params.push(("APPID".to_string(), key.to_string()));
-
-    
-    params.push(("units".to_string(), "metric".to_string()));
-    params.push(("lang".to_string(), "de".to_string()));
+    params.append(&mut settings.format());
 
     let url = Url::parse_with_params(&base, params).unwrap();
     get(&url.as_str())
@@ -74,13 +67,14 @@ pub fn get_current_weather(
 pub fn get_5_day_forecast(
     location: LocationSpecifier,
     key: &str,
-    settings: Settings,
+    settings: &Settings,
 ) -> Result<WeatherReport5Day, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
 
     base.push_str("forecast");
     params.push(("APPID".to_string(), key.to_string()));
+    params.append(&mut settings.format());
 
     let url = Url::parse_with_params(&base, params).unwrap();
     get(&url.as_str())
@@ -90,7 +84,7 @@ pub fn get_16_day_forecast(
     location: LocationSpecifier,
     key: &str,
     len: u8,
-    settings: Settings,
+    settings: &Settings,
 ) -> Result<WeatherReport16Day, ErrorReport> {
     if len > 16 || len == 0 {
         return Err(ErrorReport {
@@ -104,6 +98,7 @@ pub fn get_16_day_forecast(
     base.push_str("forecast/daily");
     params.push(("cnt".to_string(), format!("{}", len)));
     params.push(("APPID".to_string(), key.to_string()));
+    params.append(&mut settings.format());
 
     let url = Url::parse_with_params(&base, params).unwrap();
     get(&url.as_str())
@@ -114,7 +109,7 @@ pub fn get_historical_data(
     key: &str,
     start: time::Timespec,
     end: time::Timespec,
-    settings: Settings,
+    settings: &Settings,
 ) -> Result<WeatherReportHistorical, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
@@ -124,6 +119,7 @@ pub fn get_historical_data(
     params.push(("start".to_string(), format!("{}", start.sec)));
     params.push(("end".to_string(), format!("{}", end.sec)));
     params.push(("APPID".to_string(), key.to_string()));
+    params.append(&mut settings.format());
 
     let url = Url::parse_with_params(&base, params).unwrap();
     get(&url.as_str())
@@ -135,7 +131,7 @@ pub fn get_accumulated_temperature_data(
     start: time::Timespec,
     end: time::Timespec,
     threshold: u32,
-    settings: Settings,
+    settings: &Settings,
 ) -> Result<WeatherAccumulatedTemperature, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
@@ -146,6 +142,7 @@ pub fn get_accumulated_temperature_data(
     params.push(("end".to_string(), format!("{}", end.sec)));
     params.push(("threshold".to_string(), format!("{}", threshold)));
     params.push(("APPID".to_string(), key.to_string()));
+    params.append(&mut settings.format());
 
     let url = Url::parse_with_params(&base, params).unwrap();
     get(&url.as_str())
@@ -157,7 +154,7 @@ pub fn get_accumulated_precipitation_data(
     start: time::Timespec,
     end: time::Timespec,
     threshold: u32,
-    settings: Settings,
+    settings: &Settings,
 ) -> Result<WeatherAccumulatedPrecipitation, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
@@ -168,6 +165,7 @@ pub fn get_accumulated_precipitation_data(
     params.push(("end".to_string(), format!("{}", end.sec)));
     params.push(("threshold".to_string(), format!("{}", threshold)));
     params.push(("APPID".to_string(), key.to_string()));
+    params.append(&mut settings.format());
 
     let url = Url::parse_with_params(&base, params).unwrap();
     get(&url.as_str())
@@ -176,13 +174,14 @@ pub fn get_accumulated_precipitation_data(
 pub fn get_current_uv_index(
     location: LocationSpecifier,
     key: &str,
-    settings: Settings,
+    settings: &Settings,
 ) -> Result<UvIndex, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
 
     base.push_str("uvi");
     params.push(("APPID".to_string(), key.to_string()));
+    params.append(&mut settings.format());
 
     let url = Url::parse_with_params(&base, params).unwrap();
     get(&url.as_str())
@@ -192,7 +191,7 @@ pub fn get_forecast_uv_index(
     location: LocationSpecifier,
     key: &str,
     len: u8,
-    settings: Settings,
+    settings: &Settings,
 ) -> Result<ForecastUvIndex, ErrorReport> {
     if len > 8 || len == 0 {
         return Err(ErrorReport {
@@ -206,6 +205,7 @@ pub fn get_forecast_uv_index(
     base.push_str("uvi/forecast");
     params.push(("cnt".to_string(), format!("{}", len)));
     params.push(("APPID".to_string(), key.to_string()));
+    params.append(&mut settings.format());
 
     let url = Url::parse_with_params(&base, params).unwrap();
     get(&url.as_str())
@@ -216,7 +216,7 @@ pub fn get_historical_uv_index(
     key: &str,
     start: time::Timespec,
     end: time::Timespec,
-    settings: Settings,
+    settings: &Settings,
 ) -> Result<HistoricalUvIndex, ErrorReport> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
@@ -225,6 +225,7 @@ pub fn get_historical_uv_index(
     params.push(("start".to_string(), format!("{}", start.sec)));
     params.push(("end".to_string(), format!("{}", end.sec)));
     params.push(("APPID".to_string(), key.to_string()));
+    params.append(&mut settings.format());
 
     let url = Url::parse_with_params(&base, params).unwrap();
     get(&url.as_str())

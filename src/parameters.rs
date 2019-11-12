@@ -1,29 +1,27 @@
 #[derive(Default, Debug)]
 pub struct Settings {
-    pub unit : Option<Unit>,
+    pub unit: Option<Unit>,
     pub lang: Option<Language>,
 }
 
-impl Settings{
+impl Settings {
     pub fn format(&self) -> Vec<(String, String)> {
         let mut res: Vec<(String, String)> = Vec::new();
-        self.unit.map(|v: Unit | v.format().map(|u: (String, String) | res.push(u)));
-        self.lang.map(|v: Language | v.format().map(|u: (String, String) | res.push(u)));
+        add_param(&mut res, self.unit);
+        add_param(&mut res, self.lang);
         res
     }
 }
 
-trait Format_Params {
+fn add_param<T: FormatParameters>(settings: &mut Vec<(String, String)>, param: Option<T>) {
+    param.map(|v: T| v.format().map(|u: (String, String)| settings.push(u)));
+}
+
+trait FormatParameters {
     fn format(&self) -> Option<(String, String)>;
 }
 
-fn add_param<T: Format_Params>(settings: &mut Vec<(String, String), param: Option<T>) {
-    param.map
-}   
-
-
-
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Unit {
     // Celcius, default
     Metric,
@@ -33,8 +31,8 @@ pub enum Unit {
     Imperial,
 }
 
-impl Format_Params for Unit {
-    pub fn format(&self) -> Option<(String, String)> {
+impl FormatParameters for Unit {
+    fn format(&self) -> Option<(String, String)> {
         match self {
             Unit::Metric => Some(("units".to_string(), "metric".to_string())),
             Unit::Standard => None,
@@ -44,7 +42,7 @@ impl Format_Params for Unit {
 }
 
 /// Translation is only applied for the description field!
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum Language {
     Arabic,
     Bulgarian,
@@ -53,7 +51,7 @@ pub enum Language {
     German,
     Greek,
     English,
-    Persian_Farsi,
+    PersianFarsi,
     Finnish,
     French,
     Galician,
@@ -77,12 +75,12 @@ pub enum Language {
     Turkish,
     Ukrainian,
     Vietnamese,
-    Chinese_Simplified,
-    Chinese_Traditional,
+    ChineseSimplified,
+    ChineseTraditional,
 }
 
-impl Format_Params for Language {
-    pub fn format(&self) -> Option<(String, String)> {
+impl FormatParameters for Language {
+    fn format(&self) -> Option<(String, String)> {
         use Language::*;
         Some((
             String::from("lang"),
@@ -94,7 +92,7 @@ impl Format_Params for Language {
                 German => "de",
                 Greek => "el",
                 English => "en",
-                Persian_Farsi => "fa",
+                PersianFarsi => "fa",
                 Finnish => "fi",
                 French => "fr",
                 Galician => "gl",
@@ -118,8 +116,8 @@ impl Format_Params for Language {
                 Turkish => "tr",
                 Ukrainian => "ua",
                 Vietnamese => "vi",
-                Chinese_Simplified => "zh_cn",
-                Chinese_Traditional => "zh_tw",
+                ChineseSimplified => "zh_cn",
+                ChineseTraditional => "zh_tw",
             }
             .to_string(),
         ))
