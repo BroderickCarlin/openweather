@@ -9,7 +9,7 @@ mod parameters;
 mod weather_types;
 
 pub use location::LocationSpecifier;
-pub use parameters::{Settings, Unit, Language};
+pub use parameters::{Language, Settings, Unit};
 
 use log::debug;
 use url::Url;
@@ -52,7 +52,7 @@ where
 }
 
 pub fn get_current_weather(
-    location: LocationSpecifier,
+    location: &LocationSpecifier,
     key: &str,
     settings: &Settings,
 ) -> Result<WeatherReportCurrent, ErrorReport> {
@@ -68,7 +68,7 @@ pub fn get_current_weather(
 }
 
 pub fn get_5_day_forecast(
-    location: LocationSpecifier,
+    location: &LocationSpecifier,
     key: &str,
     settings: &Settings,
 ) -> Result<WeatherReport5Day, ErrorReport> {
@@ -84,7 +84,7 @@ pub fn get_5_day_forecast(
 }
 
 pub fn get_16_day_forecast(
-    location: LocationSpecifier,
+    location: &LocationSpecifier,
     key: &str,
     len: u8,
     settings: &Settings,
@@ -108,7 +108,7 @@ pub fn get_16_day_forecast(
 }
 
 pub fn get_historical_data(
-    location: LocationSpecifier,
+    location: &LocationSpecifier,
     key: &str,
     start: time::Timespec,
     end: time::Timespec,
@@ -129,7 +129,7 @@ pub fn get_historical_data(
 }
 
 pub fn get_accumulated_temperature_data(
-    location: LocationSpecifier,
+    location: &LocationSpecifier,
     key: &str,
     start: time::Timespec,
     end: time::Timespec,
@@ -152,7 +152,7 @@ pub fn get_accumulated_temperature_data(
 }
 
 pub fn get_accumulated_precipitation_data(
-    location: LocationSpecifier,
+    location: &LocationSpecifier,
     key: &str,
     start: time::Timespec,
     end: time::Timespec,
@@ -175,7 +175,7 @@ pub fn get_accumulated_precipitation_data(
 }
 
 pub fn get_current_uv_index(
-    location: LocationSpecifier,
+    location: &LocationSpecifier,
     key: &str,
     settings: &Settings,
 ) -> Result<UvIndex, ErrorReport> {
@@ -191,7 +191,7 @@ pub fn get_current_uv_index(
 }
 
 pub fn get_forecast_uv_index(
-    location: LocationSpecifier,
+    location: &LocationSpecifier,
     key: &str,
     len: u8,
     settings: &Settings,
@@ -215,7 +215,7 @@ pub fn get_forecast_uv_index(
 }
 
 pub fn get_historical_uv_index(
-    location: LocationSpecifier,
+    location: &LocationSpecifier,
     key: &str,
     start: time::Timespec,
     end: time::Timespec,
@@ -254,7 +254,7 @@ mod tests {
             city: "Minneapolis",
             country: "USA",
         };
-        let weather = crate::get_current_weather(loc, &api_key(), SETTINGS).unwrap();
+        let weather = crate::get_current_weather(&loc, &api_key(), SETTINGS).unwrap();
         println!("Right now in Minneapolis, MN it is {}C", weather.main.temp);
     }
 
@@ -264,7 +264,7 @@ mod tests {
             city: "Minneapolis",
             country: "USA",
         };
-        let weather = crate::get_5_day_forecast(loc, &api_key(), SETTINGS).unwrap();
+        let weather = crate::get_5_day_forecast(&loc, &api_key(), SETTINGS).unwrap();
         println!("5 Day Report in Minneapolis, MN it is {:?}", weather.list);
     }
 }

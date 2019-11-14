@@ -6,6 +6,6 @@ fn main() {
         city: "Minneapolis",
         country: "USA",
     };
-    let weather = openweather::get_current_weather(loc, API_KEY, &Settings::default()).unwrap();
+    let weather = openweather::get_current_weather(&loc, API_KEY, &Settings::default()).unwrap();
     println!("Right now in Minneapolis, MN it is {}K", weather.main.temp);
 }
