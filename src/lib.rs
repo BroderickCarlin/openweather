@@ -9,7 +9,7 @@ mod parameters;
 mod weather_types;
 
 pub use location::LocationSpecifier;
-pub use parameters::Settings;
+pub use parameters::{Settings, Unit, Language};
 
 use log::debug;
 use url::Url;
