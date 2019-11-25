@@ -145,6 +145,8 @@ pub struct WeatherReportCurrent {
     pub main: Main,
     pub visibility: u32,
     pub wind: Wind,
+    pub rain: Option<Rain>,
+    pub snow: Option<Snow>,
     pub clouds: Clouds,
     pub dt: u64,
     pub sys: Sys,
