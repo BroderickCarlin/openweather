@@ -143,7 +143,7 @@ pub struct WeatherReportCurrent {
     pub weather: Vec<Weather>,
     pub base: String,
     pub main: Main,
-    pub visibility: u32,
+    pub visibility: Option<u32>,
     pub wind: Wind,
     pub rain: Option<Rain>,
     pub snow: Option<Snow>,
@@ -153,13 +153,14 @@ pub struct WeatherReportCurrent {
     pub timezone: Option<i32>,
     pub id: u64,
     pub name: String,
+    pub message: Option<String>,
     pub cod: u16,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Default)]
 pub struct WeatherReport5Day {
     pub cod: String,
-    pub message: f32,
+    pub message: Option<f32>,
     pub cnt: u8,
     pub list: Vec<TimeSliceHourly>,
     pub city: CityShort,
@@ -285,7 +286,7 @@ mod tests {
                 temp_max: 3.89,
                 ..Default::default()
             },
-            visibility: 10000,
+            visibility: Some(10000),
             wind: Wind {
                 speed: 1.0,
                 ..Default::default()
