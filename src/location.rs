@@ -1,17 +1,17 @@
 #[derive(Debug)]
-pub enum LocationSpecifier<'a> {
+pub enum LocationSpecifier {
     CityAndCountryName {
-        city: &'a str,
-        country: &'a str,
+        city: String,
+        country: String,
     },
-    CityId(&'a str),
+    CityId(String),
     Coordinates {
         lat: f32,
         lon: f32,
     },
     ZipCode {
-        zip: &'a str,
-        country: &'a str,
+        zip: String,
+        country: String,
     },
 
     // The following location specifiers are used to specify multiple cities or a region
@@ -27,11 +27,11 @@ pub enum LocationSpecifier<'a> {
         lon: f32,
         count: u16,
     },
-    CityIds(Vec<&'a str>),
+    CityIds(Vec<String>),
 }
 
-impl<'a> LocationSpecifier<'a> {
-    pub fn format(&'a self) -> Vec<(String, String)> {
+impl LocationSpecifier {
+    pub fn format(&self) -> Vec<(String, String)> {
         match &self {
             LocationSpecifier::CityAndCountryName { city, country } => {
                 if *country == "" {
