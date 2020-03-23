@@ -1,3 +1,5 @@
+#![forbid(unsafe_code)]
+
 use serde;
 use serde_json;
 
@@ -21,8 +23,8 @@ use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum Error {
-    #[error("API returned Errorreport:")]
-    Report(ErrorReport),
+    #[error("Openweather API error: {0}")]
+    Api(ErrorReport),
     #[error("Error parsing to json: {0}")]
     Parsing(#[from] serde_json::Error),
     #[error("Http-Req error: {0}")]
@@ -56,7 +58,7 @@ where
         Ok(val) => Ok(val),
         Err(_) => {
             let err_report: ErrorReport = serde_json::from_str(&res)?;
-            Err(Error::Report(err_report))
+            Err(Error::Api(err_report))
         }
     }
     // let res = serde_json::from_str(&res).map_err(|_| {

@@ -126,6 +126,13 @@ pub struct ErrorReport {
     pub message: String,
 }
 
+use core::fmt;
+impl fmt::Display for ErrorReport {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Code: {}, Message: {}", self.cod, self.message)
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, PartialEq, Default)]
 pub struct Sys {
     #[serde(rename = "type")]
