@@ -17,45 +17,80 @@ pub use weather_types::*;
 
 static API_BASE: &str = "https://api.openweathermap.org/data/2.5/";
 
-fn get<T>(url: &str) -> Result<T, ErrorReport>
+use thiserror::Error;
+
+#[derive(Debug, Error)]
+pub enum Error {
+    #[error("API returned Errorreport:")]
+    Report(ErrorReport),
+    #[error("Error parsing to json: {0}")]
+    Parsing(#[from] serde_json::Error),
+    #[error("Http-Req error: {0}")]
+    Connection(#[from] http_req::error::Error),
+    #[error("Bad input: {msg}")]
+    Input { msg: String },
+    #[error("Error parsing url: {0}")]
+    UrlParsing(#[from] url::ParseError),
+}
+
+/// A specialized Result type for prometheus.
+pub type Result<T> = core::result::Result<T, Error>;
+
+fn get<T>(url: &str) -> Result<T>
 where
     T: serde::de::DeserializeOwned,
 {
     let mut res = Vec::new();
 
-    let status = http_req::request::get(url, &mut res).unwrap();
+    let status = http_req::request::get(url, &mut res)?;
     debug!("Url: {:?}", url);
     debug!("Status: {:?}", status);
     debug!("Body_utf8: {:?}", res);
-    //let res = reqwest::get(url).unwrap().text().unwrap();
-    let res = String::from_utf8_lossy(&res); //.to_string();//TODO: fix uneccesary
+    let res = String::from_utf8_lossy(&res);
     debug!("Body_String: {:?}", res);
-    let data: T = match serde_json::from_str(&res) {
-        Ok(val) => val,
+    // fn err_report(res: &str) -> Result<()> {
+    //     let res: ErrorReport = serde_json::from_str(&res).map(?;
+    //     Ok(())
+    // }
+    match serde_json::from_str(&res) {
+        Ok(val) => Ok(val),
         Err(_) => {
-            let err_report: ErrorReport = match serde_json::from_str(&res) {
-                Ok(report) => report,
-                Err(e) => {
-                    return Err(ErrorReport {
-                        cod: 0,
-                        message: format!(
-                            "Got unexpected response: {:?} from (parsing) error: {:?}",
-                            res, e
-                        ),
-                    });
-                }
-            };
-            return Err(err_report);
+            let err_report: ErrorReport = serde_json::from_str(&res)?;
+            Err(Error::Report(err_report))
         }
-    };
-    Ok(data)
+    }
+    // let res = serde_json::from_str(&res).map_err(|_| {
+    //     let res: ErrorReport = serde_json::from_str(&res)?;
+    //     Err(Error::Report(res))
+    // })?;
+    // res
+    // serde.json
+    // let data: T = match serde_json::from_str(&res).map_err(|e| ? {
+    //     Ok(val) => val,
+    //     Err(_) => {
+    //         let err_report: ErrorReport = match serde_json::from_str(&res) {
+    //             Ok(report) => report,
+    //             Err(e) => {
+    //                 return Err(ErrorReport {
+    //                     cod: 0,
+    //                     message: format!(
+    //                         "Got unexpected response: {:?} from (parsing) error: {:?}",
+    //                         res, e
+    //                     ),
+    //                 })?;
+    //             }
+    //         };
+    //         return Err(err_report);
+    //     }
+    // };
+    // Ok(data)
 }
 
 pub fn get_current_weather(
     location: &LocationSpecifier,
     key: &str,
     settings: &Settings,
-) -> Result<WeatherReportCurrent, ErrorReport> {
+) -> Result<WeatherReportCurrent> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
 
@@ -63,7 +98,7 @@ pub fn get_current_weather(
     params.push(("APPID".to_string(), key.to_string()));
     params.append(&mut settings.format());
 
-    let url = Url::parse_with_params(&base, params).unwrap();
+    let url = Url::parse_with_params(&base, params)?;
     get(&url.as_str())
 }
 
@@ -71,7 +106,7 @@ pub fn get_5_day_forecast(
     location: &LocationSpecifier,
     key: &str,
     settings: &Settings,
-) -> Result<WeatherReport5Day, ErrorReport> {
+) -> Result<WeatherReport5Day> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
 
@@ -79,7 +114,7 @@ pub fn get_5_day_forecast(
     params.push(("APPID".to_string(), key.to_string()));
     params.append(&mut settings.format());
 
-    let url = Url::parse_with_params(&base, params).unwrap();
+    let url = Url::parse_with_params(&base, params)?;
     get(&url.as_str())
 }
 
@@ -88,11 +123,10 @@ pub fn get_16_day_forecast(
     key: &str,
     len: u8,
     settings: &Settings,
-) -> Result<WeatherReport16Day, ErrorReport> {
+) -> Result<WeatherReport16Day> {
     if len > 16 || len == 0 {
-        return Err(ErrorReport {
-            cod: 0,
-            message: format!("Only support 1 to 16 day forecasts but {:?} requested", len),
+        return Err(Error::Input {
+            msg: format!("Only support 1 to 16 day forecasts but {:?} requested", len),
         });
     }
     let mut base = String::from(API_BASE);
@@ -103,7 +137,7 @@ pub fn get_16_day_forecast(
     params.push(("APPID".to_string(), key.to_string()));
     params.append(&mut settings.format());
 
-    let url = Url::parse_with_params(&base, params).unwrap();
+    let url = Url::parse_with_params(&base, params)?;
     get(&url.as_str())
 }
 
@@ -113,7 +147,7 @@ pub fn get_historical_data(
     start: time::Timespec,
     end: time::Timespec,
     settings: &Settings,
-) -> Result<WeatherReportHistorical, ErrorReport> {
+) -> Result<WeatherReportHistorical> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
 
@@ -124,7 +158,7 @@ pub fn get_historical_data(
     params.push(("APPID".to_string(), key.to_string()));
     params.append(&mut settings.format());
 
-    let url = Url::parse_with_params(&base, params).unwrap();
+    let url = Url::parse_with_params(&base, params)?;
     get(&url.as_str())
 }
 
@@ -135,7 +169,7 @@ pub fn get_accumulated_temperature_data(
     end: time::Timespec,
     threshold: u32,
     settings: &Settings,
-) -> Result<WeatherAccumulatedTemperature, ErrorReport> {
+) -> Result<WeatherAccumulatedTemperature> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
 
@@ -147,7 +181,7 @@ pub fn get_accumulated_temperature_data(
     params.push(("APPID".to_string(), key.to_string()));
     params.append(&mut settings.format());
 
-    let url = Url::parse_with_params(&base, params).unwrap();
+    let url = Url::parse_with_params(&base, params)?;
     get(&url.as_str())
 }
 
@@ -158,7 +192,7 @@ pub fn get_accumulated_precipitation_data(
     end: time::Timespec,
     threshold: u32,
     settings: &Settings,
-) -> Result<WeatherAccumulatedPrecipitation, ErrorReport> {
+) -> Result<WeatherAccumulatedPrecipitation> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
 
@@ -170,7 +204,7 @@ pub fn get_accumulated_precipitation_data(
     params.push(("APPID".to_string(), key.to_string()));
     params.append(&mut settings.format());
 
-    let url = Url::parse_with_params(&base, params).unwrap();
+    let url = Url::parse_with_params(&base, params)?;
     get(&url.as_str())
 }
 
@@ -178,7 +212,7 @@ pub fn get_current_uv_index(
     location: &LocationSpecifier,
     key: &str,
     settings: &Settings,
-) -> Result<UvIndex, ErrorReport> {
+) -> Result<UvIndex> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
 
@@ -186,7 +220,7 @@ pub fn get_current_uv_index(
     params.push(("APPID".to_string(), key.to_string()));
     params.append(&mut settings.format());
 
-    let url = Url::parse_with_params(&base, params).unwrap();
+    let url = Url::parse_with_params(&base, params)?;
     get(&url.as_str())
 }
 
@@ -195,11 +229,10 @@ pub fn get_forecast_uv_index(
     key: &str,
     len: u8,
     settings: &Settings,
-) -> Result<ForecastUvIndex, ErrorReport> {
+) -> Result<ForecastUvIndex> {
     if len > 8 || len == 0 {
-        return Err(ErrorReport {
-            cod: 0,
-            message: format!("Only support 1 to 8 day forecasts but {:?} requested", len),
+        return Err(Error::Input {
+            msg: format!("Only support 1 to 8 day forecasts but {:?} requested", len),
         });
     }
     let mut base = String::from(API_BASE);
@@ -210,7 +243,7 @@ pub fn get_forecast_uv_index(
     params.push(("APPID".to_string(), key.to_string()));
     params.append(&mut settings.format());
 
-    let url = Url::parse_with_params(&base, params).unwrap();
+    let url = Url::parse_with_params(&base, params)?;
     get(&url.as_str())
 }
 
@@ -220,7 +253,7 @@ pub fn get_historical_uv_index(
     start: time::Timespec,
     end: time::Timespec,
     settings: &Settings,
-) -> Result<HistoricalUvIndex, ErrorReport> {
+) -> Result<HistoricalUvIndex> {
     let mut base = String::from(API_BASE);
     let mut params = location.format();
 
@@ -230,7 +263,7 @@ pub fn get_historical_uv_index(
     params.push(("APPID".to_string(), key.to_string()));
     params.append(&mut settings.format());
 
-    let url = Url::parse_with_params(&base, params).unwrap();
+    let url = Url::parse_with_params(&base, params)?;
     get(&url.as_str())
 }
 
@@ -251,20 +284,22 @@ mod tests {
     #[test]
     fn get_current_weather() {
         let loc = LocationSpecifier::CityAndCountryName {
-            city: "Minneapolis",
-            country: "USA",
+            city: "Minneapolis".into(),
+            country: "USA".into(),
         };
-        let weather = crate::get_current_weather(&loc, &api_key(), SETTINGS).unwrap();
+        let weather = crate::get_current_weather(&loc, &api_key(), SETTINGS)
+            .expect("failure getting current weather");
         println!("Right now in Minneapolis, MN it is {}C", weather.main.temp);
     }
 
     #[test]
     fn get_5_day_forecast() {
         let loc = LocationSpecifier::CityAndCountryName {
-            city: "Minneapolis",
-            country: "USA",
+            city: "Minneapolis".into(),
+            country: "USA".into(),
         };
-        let weather = crate::get_5_day_forecast(&loc, &api_key(), SETTINGS).unwrap();
+        let weather = crate::get_5_day_forecast(&loc, &api_key(), SETTINGS)
+            .expect("failure getting 5 day forecast");
         println!("5 Day Report in Minneapolis, MN it is {:?}", weather.list);
     }
 }
