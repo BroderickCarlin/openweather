@@ -27,6 +27,8 @@ pub enum Error {
     Api(ErrorReport),
     #[error("Error parsing to json: {0}")]
     Parsing(#[from] serde_json::Error),
+    #[error("Error parsing to json. Parsing as Weather: {0} - Parsing as ErrorReport: {1}")]
+    Parsing2(serde_json::Error, serde_json::Error),
     #[error("Http-Req error: {0}")]
     Connection(#[from] http_req::error::Error),
     #[error("Bad input: {msg}")]
@@ -56,8 +58,9 @@ where
     // }
     match serde_json::from_str(&res) {
         Ok(val) => Ok(val),
-        Err(_) => {
-            let err_report: ErrorReport = serde_json::from_str(&res)?;
+        Err(e_weather) => {
+            let err_report: ErrorReport = serde_json::from_str(&res)
+                .map_err(|e_report| Error::Parsing2(e_report, e_weather))?;
             Err(Error::Api(err_report))
         }
     }
